@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오늘 뭐 먹지? 🍙</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FFF6EC;
+    --peach:#FFD9C7;
+    --coral:#FF8C7A;
+    --mint:#B8E8D4;
+    --butter:#FFE49A;
+    --choco:#6B4A3D;
+    --lavender:#D9CBFF;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at 15% 20%, var(--peach) 0%, transparent 40%),
+      radial-gradient(circle at 85% 15%, var(--mint) 0%, transparent 35%),
+      radial-gradient(circle at 80% 85%, var(--lavender) 0%, transparent 40%),
+      var(--cream);
+    font-family:'Gaegu', sans-serif;
+    color:var(--choco);
+    overflow:hidden;
+    position:relative;
+  }
+
+  /* floating decorative emoji */
+  .floaty{
+    position:absolute;
+    font-size:2rem;
+    opacity:0.55;
+    animation:drift 6s ease-in-out infinite;
+    pointer-events:none;
+    user-select:none;
+  }
+  @keyframes drift{
+    0%,100%{ transform:translateY(0) rotate(-6deg); }
+    50%{ transform:translateY(-18px) rotate(6deg); }
+  }
+
+  .stage{
+    position:relative;
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:28px;
+    padding:32px;
+  }
+
+  h1{
+    font-family:'Jua', sans-serif;
+    font-size:clamp(1.8rem, 5vw, 2.6rem);
+    margin:0;
+    color:var(--choco);
+    text-shadow:2px 2px 0 #fff;
+  }
+
+  h1 span{
+    color:var(--coral);
+  }
+
+  /* gacha machine */
+  .machine{
+    width:220px;
+    height:230px;
+    position:relative;
+  }
+
+  .globe{
+    width:200px;
+    height:170px;
+    border-radius:50% 50% 46% 46% / 55% 55% 45% 45%;
+    background:
+      radial-gradient(circle at 35% 30%, #ffffff 0%, #ffffff 8%, transparent 9%),
+      linear-gradient(180deg, #ffffff 0%, #eaf7ff 60%, #dff1ff 100%);
+    border:5px solid #ffffff;
+    box-shadow:
+      inset -8px -10px 20px rgba(150,190,220,0.35),
+      0 10px 18px rgba(200,160,140,0.25);
+    position:relative;
+    margin:0 auto;
+    overflow:hidden;
+  }
+
+  .capsule{
+    position:absolute;
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    top:var(--t);
+    left:var(--l);
+  }
+  .capsule::before, .capsule::after{
+    content:"";
+    position:absolute;
+    width:34px;
+    height:17px;
+    left:0;
+  }
+  .capsule::before{ top:0; border-radius:34px 34px 0 0; background:var(--top-c); }
+  .capsule::after{ bottom:0; border-radius:0 0 34px 34px; background:var(--bot-c); }
+
+  .base{
+    width:170px;
+    height:70px;
+    margin:0 auto;
+    background:linear-gradient(180deg, var(--coral) 0%, #E9694F 100%);
+    border-radius:16px 16px 26px 26px;
+    position:relative;
+    box-shadow:0 8px 14px rgba(150,90,70,0.25);
+  }
+
+  .base::before{ /* coin slot */
+    content:"";
+    position:absolute;
+    width:26px;
+    height:8px;
+    background:#B94B34;
+    border-radius:4px;
+    top:14px;
+    left:18px;
+  }
+
+  .knob{
+    position:absolute;
+    width:36px;
+    height:36px;
+    background:radial-gradient(circle at 35% 30%, #FFE9DE, var(--butter));
+    border-radius:50%;
+    right:18px;
+    top:16px;
+    box-shadow:0 3px 6px rgba(0,0,0,0.15);
+    transition:transform .5s ease;
+  }
+  .machine.spin .knob{ transform:rotate(360deg); }
+
+  .flap{
+    position:absolute;
+    width:40px;
+    height:22px;
+    background:#E9694F;
+    border-radius:0 0 8px 8px;
+    left:50%;
+    bottom:-4px;
+    transform:translateX(-50%);
+  }
+
+  /* dropped capsule animation */
+  .drop-capsule{
+    position:absolute;
+    left:50%;
+    bottom:-2px;
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    background:linear-gradient(180deg, var(--butter), var(--coral));
+    transform:translate(-50%, 0) scale(0);
+    opacity:0;
+  }
+  .machine.spin .drop-capsule{
+    animation:popOut 0.9s ease forwards;
+  }
+  @keyframes popOut{
+    0%{ transform:translate(-50%, -10px) scale(0); opacity:0; }
+    40%{ transform:translate(-50%, 30px) scale(1); opacity:1; }
+    70%{ transform:translate(-50%, 20px) scale(1); opacity:1; }
+    100%{ transform:translate(-50%, 46px) scale(1); opacity:1; }
+  }
+
+  button.roll{
+    font-family:'Jua', sans-serif;
+    font-size:1.25rem;
+    padding:16px 40px;
+    border:none;
+    border-radius:999px;
+    background:linear-gradient(180deg, #FFA48E 0%, var(--coral) 100%);
+    color:#fff;
+    cursor:pointer;
+    box-shadow:0 6px 0 #D45B45, 0 10px 16px rgba(212,91,69,0.3);
+    transition:transform .12s ease, box-shadow .12s ease;
+    letter-spacing:1px;
+  }
+  button.roll:hover{ transform:translateY(-2px); }
+  button.roll:active{
+    transform:translateY(4px);
+    box-shadow:0 2px 0 #D45B45, 0 4px 8px rgba(212,91,69,0.3);
+  }
+  button.roll:disabled{
+    opacity:0.7;
+    cursor:default;
+  }
+
+  /* result card */
+  .result-wrap{
+    min-height:150px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .result-card{
+    background:#fff;
+    border-radius:24px;
+    padding:22px 34px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    box-shadow:0 10px 0 var(--peach), 0 16px 24px rgba(150,90,70,0.15);
+    opacity:0;
+    transform:scale(0.6) rotate(-4deg);
+    border:3px dashed var(--coral);
+  }
+  .result-card.show{
+    animation:cardPop 0.55s cubic-bezier(.34,1.56,.64,1) forwards;
+  }
+  @keyframes cardPop{
+    0%{ opacity:0; transform:scale(0.4) rotate(-10deg); }
+    60%{ opacity:1; transform:scale(1.08) rotate(3deg); }
+    100%{ opacity:1; transform:scale(1) rotate(0deg); }
+  }
+
+  .result-emoji{
+    font-size:3.2rem;
+    animation:wiggle 1.4s ease-in-out infinite;
+  }
+  @keyframes wiggle{
+    0%,100%{ transform:rotate(-4deg); }
+    50%{ transform:rotate(4deg); }
+  }
+
+  .result-name{
+    font-family:'Jua', sans-serif;
+    font-size:1.6rem;
+    color:var(--choco);
+  }
+
+  .result-sub{
+    font-size:0.95rem;
+    color:#B08571;
+  }
+
+  .placeholder{
+    font-size:1rem;
+    color:#C7A891;
+  }
+
+  /* confetti */
+  .confetti{
+    position:fixed;
+    top:-10px;
+    width:8px;
+    height:14px;
+    border-radius:2px;
+    opacity:0.9;
+    pointer-events:none;
+    animation:fall linear forwards;
+  }
+  @keyframes fall{
+    to{ transform:translateY(110vh) rotate(540deg); opacity:0; }
+  }
+
+  footer{
+    font-family:'Jua', sans-serif;
+    font-size:0.8rem;
+    color:#C7A891;
+    margin-top:4px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="floaty" style="top:8%; left:8%;">🍜</div>
+  <div class="floaty" style="top:15%; right:10%; animation-delay:1s;">🍱</div>
+  <div class="floaty" style="bottom:12%; left:12%; animation-delay:2s;">🍙</div>
+  <div class="floaty" style="bottom:18%; right:8%; animation-delay:1.5s;">🍕</div>
+  <div class="floaty" style="top:45%; left:4%; animation-delay:2.5s;">🥟</div>
+  <div class="floaty" style="top:40%; right:4%; animation-delay:0.5s;">🍔</div>
+
+  <main class="stage">
+    <h1>오늘 점심, <span>뭐 먹지?</span> 🤔</h1>
+
+    <div class="machine" id="machine">
+      <div class="globe" id="globe"></div>
+      <div class="base">
+        <div class="knob"></div>
+        <div class="flap"></div>
+      </div>
+      <div class="drop-capsule"></div>
+    </div>
+
+    <button class="roll" id="rollBtn">🎰 메뉴 뽑기</button>
+
+    <div class="result-wrap">
+      <div class="result-card" id="resultCard">
+        <div class="result-emoji" id="resultEmoji">🍽️</div>
+        <div class="result-name" id="resultName">버튼을 눌러줘!</div>
+        <div class="result-sub" id="resultSub">오늘의 점심 메뉴가 여기 나타나요</div>
+      </div>
+    </div>
+
+    <footer>버튼 하나로 고민 끝 ✨</footer>
+  </main>
+
+<script>
+  const menus = [
+    // 한식
+    { name:"김치찌개", emoji:"🍲", sub:"얼큰하게 한 그릇 어때요?" },
+    { name:"된장찌개", emoji:"🍚", sub:"구수한 국물이 생각나는 날" },
+    { name:"순두부찌개", emoji:"🌶️", sub:"보들보들 얼큰하게" },
+    { name:"부대찌개", emoji:"🥘", sub:"얼큰하고 푸짐하게" },
+    { name:"갈비탕", emoji:"🍖", sub:"뜨끈한 보양식 한 그릇" },
+    { name:"삼계탕", emoji:"🍗", sub:"든든하게 몸보신하는 날" },
+    { name:"설렁탕", emoji:"🥣", sub:"뽀얀 국물이 생각날 때" },
+    { name:"육개장", emoji:"🌶️", sub:"칼칼하게 속을 풀어봐요" },
+    { name:"비빔밥", emoji:"🥗", sub:"골고루 비벼 먹는 즐거움" },
+    { name:"물냉면", emoji:"🍥", sub:"시원하게 즐기는 한 끼" },
+    { name:"비빔냉면", emoji:"🌶️", sub:"새콤매콤 입맛 살리기" },
+    { name:"삼겹살", emoji:"🥓", sub:"오늘은 좀 든든하게!" },
+    { name:"제육볶음", emoji:"🍖", sub:"매콤한 밥도둑" },
+    { name:"불고기", emoji:"🥩", sub:"달콤짭짤 남녀노소 인기" },
+    { name:"떡볶이", emoji:"🌶️", sub:"매콤달콤 국민 간식" },
+    { name:"라면", emoji:"🍜", sub:"간단하고 든든하게" },
+    { name:"김밥", emoji:"🍙", sub:"간단하지만 든든하게" },
+    { name:"순대국", emoji:"🍥", sub:"진한 국물이 생각날 때" },
+    { name:"칼국수", emoji:"🍜", sub:"따뜻한 면 요리가 필요한 날" },
+    { name:"잔치국수", emoji:"🍜", sub:"멸치육수 한 그릇 어때요" },
+    { name:"콩국수", emoji:"🥛", sub:"고소하고 시원한 한 끼" },
+    { name:"잡채", emoji:"🥢", sub:"쫄깃한 당면 요리" },
+    { name:"낙지볶음", emoji:"🐙", sub:"오늘은 매콤하게 화끈하게" },
+    { name:"감자탕", emoji:"🍲", sub:"얼큰하고 든든한 뼈해장국" },
+    { name:"닭갈비", emoji:"🍗", sub:"철판 위 매콤한 즐거움" },
+    { name:"보쌈", emoji:"🥩", sub:"부드러운 수육에 쌈 한입" },
+    { name:"매운탕", emoji:"🐟", sub:"얼큰한 생선 국물" },
+    { name:"조개찜", emoji:"🦪", sub:"바다향 가득한 한 끼" },
+
+    // 중식
+    { name:"짜장면", emoji:"🍜", sub:"오늘은 검은 유혹" },
+    { name:"짬뽕", emoji:"🌶️", sub:"칼칼한 국물 한 그릇" },
+    { name:"탕수육", emoji:"🍖", sub:"바삭한 탕수육 어때요" },
+    { name:"마파두부", emoji:"🌶️", sub:"부드러운 두부에 매콤함" },
+    { name:"마라탕", emoji:"🌶️", sub:"오늘은 화끈하게" },
+    { name:"마라샹궈", emoji:"🔥", sub:"얼얼하고 화끈한 한 끼" },
+    { name:"양꼬치", emoji:"🍢", sub:"불향 가득 꼬치 요리" },
+    { name:"훠궈", emoji:"🍲", sub:"동료들과 나눠 먹는 뜨끈함" },
+    { name:"깐풍기", emoji:"🍗", sub:"바삭달콤 매콤한 닭요리" },
+    { name:"유린기", emoji:"🍗", sub:"새콤달콤 소스가 일품" },
+    { name:"중식볶음밥", emoji:"🍚", sub:"불맛 가득한 볶음밥" },
+    { name:"딤섬", emoji:"🥟", sub:"작고 예쁜 한입 요리" },
+    { name:"고추잡채", emoji:"🌶️", sub:"매콤한 채소 볶음" },
+    { name:"팔보채", emoji:"🦐", sub:"해산물 듬뿍 볶음요리" },
+    { name:"베이징덕", emoji:"🦆", sub:"특별한 날엔 오리구이" },
+
+    // 일식
+    { name:"초밥", emoji:"🍣", sub:"오늘은 조금 특별하게" },
+    { name:"우동", emoji:"🍥", sub:"쫄깃한 면발이 당기는 날" },
+    { name:"라멘", emoji:"🍜", sub:"진한 육수 한 그릇" },
+    { name:"돈까스", emoji:"🍱", sub:"바삭바삭 튀김의 정석" },
+    { name:"규동", emoji:"🍚", sub:"달콤짭짤 소고기덮밥" },
+    { name:"카레라이스", emoji:"🍛", sub:"부드럽고 든든한 한 그릇" },
+    { name:"오코노미야키", emoji:"🥞", sub:"일본식 부침개 어때요" },
+    { name:"타코야키", emoji:"🐙", sub:"쫄깃한 문어빵 한입" },
+    { name:"텐동", emoji:"🍤", sub:"바삭한 튀김 덮밥" },
+    { name:"소바", emoji:"🍜", sub:"시원하고 깔끔한 메밀면" },
+    { name:"나베", emoji:"🍲", sub:"뜨끈하게 즐기는 전골" },
+    { name:"회덮밥", emoji:"🍣", sub:"신선하게 즐기는 한 끼" },
+    { name:"가츠동", emoji:"🍚", sub:"바삭한 돈까스 덮밥" },
+    { name:"야키토리", emoji:"🍢", sub:"숯불향 가득한 닭꼬치" },
+    { name:"오니기리", emoji:"🍙", sub:"간단하게 즐기는 주먹밥" },
+
+    // 양식
+    { name:"파스타", emoji:"🍝", sub:"기분 내는 날엔 파스타" },
+    { name:"피자", emoji:"🍕", sub:"동료들과 나눠 먹기 좋아요" },
+    { name:"스테이크", emoji:"🥩", sub:"오늘은 나에게 주는 선물" },
+    { name:"햄버거", emoji:"🍔", sub:"빠르고 든든한 선택" },
+    { name:"샌드위치", emoji:"🥪", sub:"가볍게 즐기는 한 끼" },
+    { name:"리조또", emoji:"🍚", sub:"크리미하고 고소한 한 그릇" },
+    { name:"오믈렛", emoji:"🍳", sub:"폭신폭신 계란 요리" },
+    { name:"그라탕", emoji:"🧀", sub:"치즈 듬뿍 든든하게" },
+    { name:"감바스", emoji:"🦐", sub:"올리브오일에 퐁당 새우" },
+    { name:"브런치플레이트", emoji:"🥐", sub:"여유롭게 즐기는 한 끼" },
+    { name:"핫도그", emoji:"🌭", sub:"간단하게 한입에 쏙" },
+    { name:"부리또", emoji:"🌯", sub:"든든하게 돌돌 말아서" },
+    { name:"나초", emoji:"🧀", sub:"치즈와 함께 즐기는 간식" },
+    { name:"타코", emoji:"🌮", sub:"이국적인 한 끼 어때요?" },
+    { name:"샐러드", emoji:"🥗", sub:"가볍고 건강하게" },
+    { name:"크림수프", emoji:"🥣", sub:"부드럽고 따뜻한 한 그릇" },
+    { name:"라자냐", emoji:"🍝", sub:"겹겹이 쌓인 든든함" },
+    { name:"까르보나라", emoji:"🍝", sub:"고소하고 진한 크림파스타" },
+    { name:"치즈버거", emoji:"🍔", sub:"치즈가 듬뿍 든 든든함" },
+    { name:"프렌치토스트", emoji:"🍞", sub:"달콤한 브런치 메뉴" },
+
+    // 아시아
+    { name:"베트남쌀국수", emoji:"🍜", sub:"깔끔한 국물이 땡길 때" },
+    { name:"반미", emoji:"🥖", sub:"바게트 속 든든한 재료들" },
+    { name:"팟타이", emoji:"🍜", sub:"새콤달콤 태국식 볶음면" },
+    { name:"똠양꿍", emoji:"🍲", sub:"새콤매콤 향긋한 국물" },
+    { name:"그린커리", emoji:"🍛", sub:"향긋하고 매콤한 태국커리" },
+    { name:"나시고랭", emoji:"🍚", sub:"인도네시아식 볶음밥" },
+    { name:"카오팟", emoji:"🍚", sub:"태국식 볶음밥 어때요" },
+    { name:"사테", emoji:"🍢", sub:"땅콩소스 꼬치 요리" },
+    { name:"인도커리", emoji:"🍛", sub:"향신료 가득한 한 그릇" },
+    { name:"난", emoji:"🫓", sub:"커리와 찰떡궁합" },
+    { name:"탄두리치킨", emoji:"🍗", sub:"화덕에 구운 향긋한 치킨" },
+    { name:"케밥", emoji:"🌯", sub:"고기 듬뿍 든든하게" },
+    { name:"분짜", emoji:"🍜", sub:"베트남식 숯불고기 국수" },
+    { name:"딴딴면", emoji:"🌶️", sub:"고소하고 매콤한 중국면" },
+    { name:"팟씨유", emoji:"🍜", sub:"불맛 나는 태국식 볶음면" },
+    { name:"초계국수", emoji:"🍜", sub:"새콤하고 시원한 닭고기국수" },
+    { name:"락사", emoji:"🍜", sub:"코코넛 향 가득한 국수" },
+    { name:"싱가포르치킨라이스", emoji:"🍗", sub:"부드러운 닭고기와 향긋한 밥" },
+    { name:"만두", emoji:"🥟", sub:"찐만두 어때요?" },
+    { name:"훈툰면", emoji:"🍜", sub:"쫄깃한 만두가 들어간 국수" },
+    { name:"알탕", emoji:"🐟", sub:"얼큰한 알탕 한 그릇" },
+    { name:"회", emoji:"🐟", sub:"신선하게 즐기는 오늘의 별미" },
+    { name:"치킨", emoji:"🍗", sub:"점심에도 치킨은 옳다" },
+    { name:"볶음밥", emoji:"🍚", sub:"냉장고 파먹기 좋은 날" }
+  ];
+
+  const btn = document.getElementById('rollBtn');
+  const machine = document.getElementById('machine');
+  const resultCard = document.getElementById('resultCard');
+  const resultEmoji = document.getElementById('resultEmoji');
+  const resultName = document.getElementById('resultName');
+  const resultSub = document.getElementById('resultSub');
+  const globe = document.getElementById('globe');
+
+  // fill globe with little colorful capsules for decoration
+  const capsuleColors = ['#FF8C7A','#FFE49A','#B8E8D4','#D9CBFF','#FFB6C1','#A0D8FF'];
+  const positions = [
+    {t:'10%', l:'16%'}, {t:'6%', l:'50%'}, {t:'14%', l:'72%'},
+    {t:'28%', l:'6%'},  {t:'26%', l:'34%'}, {t:'30%', l:'58%'}, {t:'22%', l:'80%'},
+    {t:'44%', l:'18%'}, {t:'42%', l:'42%'}, {t:'46%', l:'64%'}, {t:'40%', l:'84%'},
+    {t:'58%', l:'30%'}, {t:'56%', l:'52%'}
+  ];
+
+  const capsules = positions.map((p, i) => {
+    const c = document.createElement('div');
+    c.className = 'capsule';
+    c.style.setProperty('--t', p.t);
+    c.style.setProperty('--l', p.l);
+    c.style.setProperty('--top-c', capsuleColors[i % capsuleColors.length]);
+    c.style.setProperty('--bot-c', '#ffffff');
+    globe.appendChild(c);
+    return c;
+  });
+
+  // generate a smooth, meandering set of keyframes so each capsule
+  // drifts and bumps around on its own path, like it's floating in water
+  function driftKeyframes(amplitude){
+    const steps = 5 + Math.floor(Math.random() * 3);
+    const frames = [];
+    for (let i = 0; i <= steps; i++){
+      const x = (Math.random() - 0.5) * amplitude * 2;
+      const y = (Math.random() - 0.5) * amplitude * 2;
+      const r = (Math.random() - 0.5) * (amplitude * 3);
+      frames.push({ transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${r.toFixed(1)}deg)` });
+    }
+    frames.push(frames[0]); // ease back near the start so it loops smoothly
+    return frames;
+  }
+
+  function startIdleFloat(el){
+    return el.animate(driftKeyframes(4), {
+      duration: 2200 + Math.random() * 1800,
+      iterations: Infinity,
+      easing: 'ease-in-out'
+    });
+  }
+
+  let idleAnims = capsules.map(c => startIdleFloat(c));
+
+  // vigorous shaking used while the machine is "rolling"
+  function shakeCapsule(el){
+    return el.animate(driftKeyframes(14), {
+      duration: 650,
+      iterations: 1,
+      easing: 'ease-in-out'
+    });
+  }
+
+  function launchConfetti(){
+    const colors = ['#FF8C7A','#FFE49A','#B8E8D4','#D9CBFF','#FFB6C1'];
+    for(let i=0;i<26;i++){
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.style.left = Math.random()*100 + 'vw';
+      el.style.background = colors[Math.floor(Math.random()*colors.length)];
+      el.style.animationDuration = (1.6 + Math.random()*1.2) + 's';
+      el.style.animationDelay = (Math.random()*0.3) + 's';
+      document.body.appendChild(el);
+      setTimeout(()=> el.remove(), 3200);
+    }
+  }
+
+  btn.addEventListener('click', () => {
+    btn.disabled = true;
+    resultCard.classList.remove('show');
+    machine.classList.remove('spin');
+    void machine.offsetWidth; // reflow to restart animation
+    machine.classList.add('spin');
+
+    // pause the gentle idle drift and make every capsule jostle around hard,
+    // like the real machine is being shaken before it drops one
+    idleAnims.forEach(a => a.pause());
+    capsules.forEach(c => {
+      const shake = shakeCapsule(c);
+      shake.onfinish = () => {
+        c.style.transform = ''; // clear the shake's final pose
+      };
+    });
+
+    setTimeout(() => {
+      const pick = menus[Math.floor(Math.random() * menus.length)];
+      resultEmoji.textContent = pick.emoji;
+      resultName.textContent = pick.name;
+      resultSub.textContent = pick.sub;
+      resultCard.classList.add('show');
+      launchConfetti();
+      btn.disabled = false;
+
+      // settle back into the calm floating motion
+      idleAnims = capsules.map(c => startIdleFloat(c));
+    }, 700);
+  });
+</script>
+
+</body>
+</html>
