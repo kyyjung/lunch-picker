@@ -1,542 +1,558 @@
-<!DOCTYPE html>
-<html lang="ko">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>오늘 뭐 먹지? 🍙</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --cream:#FFF6EC;
-    --peach:#FFD9C7;
-    --coral:#FF8C7A;
-    --mint:#B8E8D4;
-    --butter:#FFE49A;
-    --choco:#6B4A3D;
-    --lavender:#D9CBFF;
-  }
-
-  *{box-sizing:border-box;}
-
-  body{
-    margin:0;
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:
-      radial-gradient(circle at 15% 20%, var(--peach) 0%, transparent 40%),
-      radial-gradient(circle at 85% 15%, var(--mint) 0%, transparent 35%),
-      radial-gradient(circle at 80% 85%, var(--lavender) 0%, transparent 40%),
-      var(--cream);
-    font-family:'Gaegu', sans-serif;
-    color:var(--choco);
-    overflow:hidden;
-    position:relative;
-  }
-
-  /* floating decorative emoji */
-  .floaty{
-    position:absolute;
-    font-size:2rem;
-    opacity:0.55;
-    animation:drift 6s ease-in-out infinite;
-    pointer-events:none;
-    user-select:none;
-  }
-  @keyframes drift{
-    0%,100%{ transform:translateY(0) rotate(-6deg); }
-    50%{ transform:translateY(-18px) rotate(6deg); }
-  }
-
-  .stage{
-    position:relative;
-    z-index:2;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:28px;
-    padding:32px;
-  }
-
-  h1{
-    font-family:'Jua', sans-serif;
-    font-size:clamp(1.8rem, 5vw, 2.6rem);
-    margin:0;
-    color:var(--choco);
-    text-shadow:2px 2px 0 #fff;
-  }
-
-  h1 span{
-    color:var(--coral);
-  }
-
-  /* gacha machine */
-  .machine{
-    width:220px;
-    height:230px;
-    position:relative;
-  }
-
-  .globe{
-    width:200px;
-    height:170px;
-    border-radius:50% 50% 46% 46% / 55% 55% 45% 45%;
-    background:
-      radial-gradient(circle at 35% 30%, #ffffff 0%, #ffffff 8%, transparent 9%),
-      linear-gradient(180deg, #ffffff 0%, #eaf7ff 60%, #dff1ff 100%);
-    border:5px solid #ffffff;
-    box-shadow:
-      inset -8px -10px 20px rgba(150,190,220,0.35),
-      0 10px 18px rgba(200,160,140,0.25);
-    position:relative;
-    margin:0 auto;
-    overflow:hidden;
-  }
-
-  .capsule{
-    position:absolute;
-    width:34px;
-    height:34px;
-    border-radius:50%;
-    top:var(--t);
-    left:var(--l);
-  }
-  .capsule::before, .capsule::after{
-    content:"";
-    position:absolute;
-    width:34px;
-    height:17px;
-    left:0;
-  }
-  .capsule::before{ top:0; border-radius:34px 34px 0 0; background:var(--top-c); }
-  .capsule::after{ bottom:0; border-radius:0 0 34px 34px; background:var(--bot-c); }
-
-  .base{
-    width:170px;
-    height:70px;
-    margin:0 auto;
-    background:linear-gradient(180deg, var(--coral) 0%, #E9694F 100%);
-    border-radius:16px 16px 26px 26px;
-    position:relative;
-    box-shadow:0 8px 14px rgba(150,90,70,0.25);
-  }
-
-  .base::before{ /* coin slot */
-    content:"";
-    position:absolute;
-    width:26px;
-    height:8px;
-    background:#B94B34;
-    border-radius:4px;
-    top:14px;
-    left:18px;
-  }
-
-  .knob{
-    position:absolute;
-    width:36px;
-    height:36px;
-    background:radial-gradient(circle at 35% 30%, #FFE9DE, var(--butter));
-    border-radius:50%;
-    right:18px;
-    top:16px;
-    box-shadow:0 3px 6px rgba(0,0,0,0.15);
-    transition:transform .5s ease;
-  }
-  .machine.spin .knob{ transform:rotate(360deg); }
-
-  .flap{
-    position:absolute;
-    width:40px;
-    height:22px;
-    background:#E9694F;
-    border-radius:0 0 8px 8px;
-    left:50%;
-    bottom:-4px;
-    transform:translateX(-50%);
-  }
-
-  /* dropped capsule animation */
-  .drop-capsule{
-    position:absolute;
-    left:50%;
-    bottom:-2px;
-    width:26px;
-    height:26px;
-    border-radius:50%;
-    background:linear-gradient(180deg, var(--butter), var(--coral));
-    transform:translate(-50%, 0) scale(0);
-    opacity:0;
-  }
-  .machine.spin .drop-capsule{
-    animation:popOut 0.9s ease forwards;
-  }
-  @keyframes popOut{
-    0%{ transform:translate(-50%, -10px) scale(0); opacity:0; }
-    40%{ transform:translate(-50%, 30px) scale(1); opacity:1; }
-    70%{ transform:translate(-50%, 20px) scale(1); opacity:1; }
-    100%{ transform:translate(-50%, 46px) scale(1); opacity:1; }
-  }
-
-  button.roll{
-    font-family:'Jua', sans-serif;
-    font-size:1.25rem;
-    padding:16px 40px;
-    border:none;
-    border-radius:999px;
-    background:linear-gradient(180deg, #FFA48E 0%, var(--coral) 100%);
-    color:#fff;
-    cursor:pointer;
-    box-shadow:0 6px 0 #D45B45, 0 10px 16px rgba(212,91,69,0.3);
-    transition:transform .12s ease, box-shadow .12s ease;
-    letter-spacing:1px;
-  }
-  button.roll:hover{ transform:translateY(-2px); }
-  button.roll:active{
-    transform:translateY(4px);
-    box-shadow:0 2px 0 #D45B45, 0 4px 8px rgba(212,91,69,0.3);
-  }
-  button.roll:disabled{
-    opacity:0.7;
-    cursor:default;
-  }
-
-  /* result card */
-  .result-wrap{
-    min-height:150px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-
-  .result-card{
-    background:#fff;
-    border-radius:24px;
-    padding:22px 34px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:6px;
-    box-shadow:0 10px 0 var(--peach), 0 16px 24px rgba(150,90,70,0.15);
-    opacity:0;
-    transform:scale(0.6) rotate(-4deg);
-    border:3px dashed var(--coral);
-  }
-  .result-card.show{
-    animation:cardPop 0.55s cubic-bezier(.34,1.56,.64,1) forwards;
-  }
-  @keyframes cardPop{
-    0%{ opacity:0; transform:scale(0.4) rotate(-10deg); }
-    60%{ opacity:1; transform:scale(1.08) rotate(3deg); }
-    100%{ opacity:1; transform:scale(1) rotate(0deg); }
-  }
-
-  .result-emoji{
-    font-size:3.2rem;
-    animation:wiggle 1.4s ease-in-out infinite;
-  }
-  @keyframes wiggle{
-    0%,100%{ transform:rotate(-4deg); }
-    50%{ transform:rotate(4deg); }
-  }
-
-  .result-name{
-    font-family:'Jua', sans-serif;
-    font-size:1.6rem;
-    color:var(--choco);
-  }
-
-  .result-sub{
-    font-size:0.95rem;
-    color:#B08571;
-  }
-
-  .placeholder{
-    font-size:1rem;
-    color:#C7A891;
-  }
-
-  /* confetti */
-  .confetti{
-    position:fixed;
-    top:-10px;
-    width:8px;
-    height:14px;
-    border-radius:2px;
-    opacity:0.9;
-    pointer-events:none;
-    animation:fall linear forwards;
-  }
-  @keyframes fall{
-    to{ transform:translateY(110vh) rotate(540deg); opacity:0; }
-  }
-
-  footer{
-    font-family:'Jua', sans-serif;
-    font-size:0.8rem;
-    color:#C7A891;
-    margin-top:4px;
-  }
-</style>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2685.4">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
 </head>
 <body>
-
-  <div class="floaty" style="top:8%; left:8%;">🍜</div>
-  <div class="floaty" style="top:15%; right:10%; animation-delay:1s;">🍱</div>
-  <div class="floaty" style="bottom:12%; left:12%; animation-delay:2s;">🍙</div>
-  <div class="floaty" style="bottom:18%; right:8%; animation-delay:1.5s;">🍕</div>
-  <div class="floaty" style="top:45%; left:4%; animation-delay:2.5s;">🥟</div>
-  <div class="floaty" style="top:40%; right:4%; animation-delay:0.5s;">🍔</div>
-
-  <main class="stage">
-    <h1>오늘 점심, <span>뭐 먹지?</span> 🤔</h1>
-
-    <div class="machine" id="machine">
-      <div class="globe" id="globe"></div>
-      <div class="base">
-        <div class="knob"></div>
-        <div class="flap"></div>
-      </div>
-      <div class="drop-capsule"></div>
-    </div>
-
-    <button class="roll" id="rollBtn">🎰 메뉴 뽑기</button>
-
-    <div class="result-wrap">
-      <div class="result-card" id="resultCard">
-        <div class="result-emoji" id="resultEmoji">🍽️</div>
-        <div class="result-name" id="resultName">버튼을 눌러줘!</div>
-        <div class="result-sub" id="resultSub">오늘의 점심 메뉴가 여기 나타나요</div>
-      </div>
-    </div>
-
-    <footer>버튼 하나로 고민 끝 ✨</footer>
-  </main>
-
-<script>
-  const menus = [
-    // 한식
-    { name:"김치찌개", emoji:"🍲", sub:"얼큰하게 한 그릇 어때요?" },
-    { name:"된장찌개", emoji:"🍚", sub:"구수한 국물이 생각나는 날" },
-    { name:"순두부찌개", emoji:"🌶️", sub:"보들보들 얼큰하게" },
-    { name:"부대찌개", emoji:"🥘", sub:"얼큰하고 푸짐하게" },
-    { name:"갈비탕", emoji:"🍖", sub:"뜨끈한 보양식 한 그릇" },
-    { name:"삼계탕", emoji:"🍗", sub:"든든하게 몸보신하는 날" },
-    { name:"설렁탕", emoji:"🥣", sub:"뽀얀 국물이 생각날 때" },
-    { name:"육개장", emoji:"🌶️", sub:"칼칼하게 속을 풀어봐요" },
-    { name:"비빔밥", emoji:"🥗", sub:"골고루 비벼 먹는 즐거움" },
-    { name:"물냉면", emoji:"🍥", sub:"시원하게 즐기는 한 끼" },
-    { name:"비빔냉면", emoji:"🌶️", sub:"새콤매콤 입맛 살리기" },
-    { name:"삼겹살", emoji:"🥓", sub:"오늘은 좀 든든하게!" },
-    { name:"제육볶음", emoji:"🍖", sub:"매콤한 밥도둑" },
-    { name:"불고기", emoji:"🥩", sub:"달콤짭짤 남녀노소 인기" },
-    { name:"떡볶이", emoji:"🌶️", sub:"매콤달콤 국민 간식" },
-    { name:"라면", emoji:"🍜", sub:"간단하고 든든하게" },
-    { name:"김밥", emoji:"🍙", sub:"간단하지만 든든하게" },
-    { name:"순대국", emoji:"🍥", sub:"진한 국물이 생각날 때" },
-    { name:"칼국수", emoji:"🍜", sub:"따뜻한 면 요리가 필요한 날" },
-    { name:"잔치국수", emoji:"🍜", sub:"멸치육수 한 그릇 어때요" },
-    { name:"콩국수", emoji:"🥛", sub:"고소하고 시원한 한 끼" },
-    { name:"잡채", emoji:"🥢", sub:"쫄깃한 당면 요리" },
-    { name:"낙지볶음", emoji:"🐙", sub:"오늘은 매콤하게 화끈하게" },
-    { name:"감자탕", emoji:"🍲", sub:"얼큰하고 든든한 뼈해장국" },
-    { name:"닭갈비", emoji:"🍗", sub:"철판 위 매콤한 즐거움" },
-    { name:"보쌈", emoji:"🥩", sub:"부드러운 수육에 쌈 한입" },
-    { name:"매운탕", emoji:"🐟", sub:"얼큰한 생선 국물" },
-    { name:"조개찜", emoji:"🦪", sub:"바다향 가득한 한 끼" },
-
-    // 중식
-    { name:"짜장면", emoji:"🍜", sub:"오늘은 검은 유혹" },
-    { name:"짬뽕", emoji:"🌶️", sub:"칼칼한 국물 한 그릇" },
-    { name:"탕수육", emoji:"🍖", sub:"바삭한 탕수육 어때요" },
-    { name:"마파두부", emoji:"🌶️", sub:"부드러운 두부에 매콤함" },
-    { name:"마라탕", emoji:"🌶️", sub:"오늘은 화끈하게" },
-    { name:"마라샹궈", emoji:"🔥", sub:"얼얼하고 화끈한 한 끼" },
-    { name:"양꼬치", emoji:"🍢", sub:"불향 가득 꼬치 요리" },
-    { name:"훠궈", emoji:"🍲", sub:"동료들과 나눠 먹는 뜨끈함" },
-    { name:"깐풍기", emoji:"🍗", sub:"바삭달콤 매콤한 닭요리" },
-    { name:"유린기", emoji:"🍗", sub:"새콤달콤 소스가 일품" },
-    { name:"중식볶음밥", emoji:"🍚", sub:"불맛 가득한 볶음밥" },
-    { name:"딤섬", emoji:"🥟", sub:"작고 예쁜 한입 요리" },
-    { name:"고추잡채", emoji:"🌶️", sub:"매콤한 채소 볶음" },
-    { name:"팔보채", emoji:"🦐", sub:"해산물 듬뿍 볶음요리" },
-    { name:"베이징덕", emoji:"🦆", sub:"특별한 날엔 오리구이" },
-
-    // 일식
-    { name:"초밥", emoji:"🍣", sub:"오늘은 조금 특별하게" },
-    { name:"우동", emoji:"🍥", sub:"쫄깃한 면발이 당기는 날" },
-    { name:"라멘", emoji:"🍜", sub:"진한 육수 한 그릇" },
-    { name:"돈까스", emoji:"🍱", sub:"바삭바삭 튀김의 정석" },
-    { name:"규동", emoji:"🍚", sub:"달콤짭짤 소고기덮밥" },
-    { name:"카레라이스", emoji:"🍛", sub:"부드럽고 든든한 한 그릇" },
-    { name:"오코노미야키", emoji:"🥞", sub:"일본식 부침개 어때요" },
-    { name:"타코야키", emoji:"🐙", sub:"쫄깃한 문어빵 한입" },
-    { name:"텐동", emoji:"🍤", sub:"바삭한 튀김 덮밥" },
-    { name:"소바", emoji:"🍜", sub:"시원하고 깔끔한 메밀면" },
-    { name:"나베", emoji:"🍲", sub:"뜨끈하게 즐기는 전골" },
-    { name:"회덮밥", emoji:"🍣", sub:"신선하게 즐기는 한 끼" },
-    { name:"가츠동", emoji:"🍚", sub:"바삭한 돈까스 덮밥" },
-    { name:"야키토리", emoji:"🍢", sub:"숯불향 가득한 닭꼬치" },
-    { name:"오니기리", emoji:"🍙", sub:"간단하게 즐기는 주먹밥" },
-
-    // 양식
-    { name:"파스타", emoji:"🍝", sub:"기분 내는 날엔 파스타" },
-    { name:"피자", emoji:"🍕", sub:"동료들과 나눠 먹기 좋아요" },
-    { name:"스테이크", emoji:"🥩", sub:"오늘은 나에게 주는 선물" },
-    { name:"햄버거", emoji:"🍔", sub:"빠르고 든든한 선택" },
-    { name:"샌드위치", emoji:"🥪", sub:"가볍게 즐기는 한 끼" },
-    { name:"리조또", emoji:"🍚", sub:"크리미하고 고소한 한 그릇" },
-    { name:"오믈렛", emoji:"🍳", sub:"폭신폭신 계란 요리" },
-    { name:"그라탕", emoji:"🧀", sub:"치즈 듬뿍 든든하게" },
-    { name:"감바스", emoji:"🦐", sub:"올리브오일에 퐁당 새우" },
-    { name:"브런치플레이트", emoji:"🥐", sub:"여유롭게 즐기는 한 끼" },
-    { name:"핫도그", emoji:"🌭", sub:"간단하게 한입에 쏙" },
-    { name:"부리또", emoji:"🌯", sub:"든든하게 돌돌 말아서" },
-    { name:"나초", emoji:"🧀", sub:"치즈와 함께 즐기는 간식" },
-    { name:"타코", emoji:"🌮", sub:"이국적인 한 끼 어때요?" },
-    { name:"샐러드", emoji:"🥗", sub:"가볍고 건강하게" },
-    { name:"크림수프", emoji:"🥣", sub:"부드럽고 따뜻한 한 그릇" },
-    { name:"라자냐", emoji:"🍝", sub:"겹겹이 쌓인 든든함" },
-    { name:"까르보나라", emoji:"🍝", sub:"고소하고 진한 크림파스타" },
-    { name:"치즈버거", emoji:"🍔", sub:"치즈가 듬뿍 든 든든함" },
-    { name:"프렌치토스트", emoji:"🍞", sub:"달콤한 브런치 메뉴" },
-
-    // 아시아
-    { name:"베트남쌀국수", emoji:"🍜", sub:"깔끔한 국물이 땡길 때" },
-    { name:"반미", emoji:"🥖", sub:"바게트 속 든든한 재료들" },
-    { name:"팟타이", emoji:"🍜", sub:"새콤달콤 태국식 볶음면" },
-    { name:"똠양꿍", emoji:"🍲", sub:"새콤매콤 향긋한 국물" },
-    { name:"그린커리", emoji:"🍛", sub:"향긋하고 매콤한 태국커리" },
-    { name:"나시고랭", emoji:"🍚", sub:"인도네시아식 볶음밥" },
-    { name:"카오팟", emoji:"🍚", sub:"태국식 볶음밥 어때요" },
-    { name:"사테", emoji:"🍢", sub:"땅콩소스 꼬치 요리" },
-    { name:"인도커리", emoji:"🍛", sub:"향신료 가득한 한 그릇" },
-    { name:"난", emoji:"🫓", sub:"커리와 찰떡궁합" },
-    { name:"탄두리치킨", emoji:"🍗", sub:"화덕에 구운 향긋한 치킨" },
-    { name:"케밥", emoji:"🌯", sub:"고기 듬뿍 든든하게" },
-    { name:"분짜", emoji:"🍜", sub:"베트남식 숯불고기 국수" },
-    { name:"딴딴면", emoji:"🌶️", sub:"고소하고 매콤한 중국면" },
-    { name:"팟씨유", emoji:"🍜", sub:"불맛 나는 태국식 볶음면" },
-    { name:"초계국수", emoji:"🍜", sub:"새콤하고 시원한 닭고기국수" },
-    { name:"락사", emoji:"🍜", sub:"코코넛 향 가득한 국수" },
-    { name:"싱가포르치킨라이스", emoji:"🍗", sub:"부드러운 닭고기와 향긋한 밥" },
-    { name:"만두", emoji:"🥟", sub:"찐만두 어때요?" },
-    { name:"훈툰면", emoji:"🍜", sub:"쫄깃한 만두가 들어간 국수" },
-    { name:"알탕", emoji:"🐟", sub:"얼큰한 알탕 한 그릇" },
-    { name:"회", emoji:"🐟", sub:"신선하게 즐기는 오늘의 별미" },
-    { name:"치킨", emoji:"🍗", sub:"점심에도 치킨은 옳다" },
-    { name:"볶음밥", emoji:"🍚", sub:"냉장고 파먹기 좋은 날" }
-  ];
-
-  const btn = document.getElementById('rollBtn');
-  const machine = document.getElementById('machine');
-  const resultCard = document.getElementById('resultCard');
-  const resultEmoji = document.getElementById('resultEmoji');
-  const resultName = document.getElementById('resultName');
-  const resultSub = document.getElementById('resultSub');
-  const globe = document.getElementById('globe');
-
-  // fill globe with little colorful capsules for decoration
-  const capsuleColors = ['#FF8C7A','#FFE49A','#B8E8D4','#D9CBFF','#FFB6C1','#A0D8FF'];
-  const positions = [
-    {t:'10%', l:'16%'}, {t:'6%', l:'50%'}, {t:'14%', l:'72%'},
-    {t:'28%', l:'6%'},  {t:'26%', l:'34%'}, {t:'30%', l:'58%'}, {t:'22%', l:'80%'},
-    {t:'44%', l:'18%'}, {t:'42%', l:'42%'}, {t:'46%', l:'64%'}, {t:'40%', l:'84%'},
-    {t:'58%', l:'30%'}, {t:'56%', l:'52%'}
-  ];
-
-  const capsules = positions.map((p, i) => {
-    const c = document.createElement('div');
-    c.className = 'capsule';
-    c.style.setProperty('--t', p.t);
-    c.style.setProperty('--l', p.l);
-    c.style.setProperty('--top-c', capsuleColors[i % capsuleColors.length]);
-    c.style.setProperty('--bot-c', '#ffffff');
-    globe.appendChild(c);
-    return c;
-  });
-
-  // generate a smooth, meandering set of keyframes so each capsule
-  // drifts and bumps around on its own path, like it's floating in water
-  function driftKeyframes(amplitude){
-    const steps = 5 + Math.floor(Math.random() * 3);
-    const frames = [];
-    for (let i = 0; i <= steps; i++){
-      const x = (Math.random() - 0.5) * amplitude * 2;
-      const y = (Math.random() - 0.5) * amplitude * 2;
-      const r = (Math.random() - 0.5) * (amplitude * 3);
-      frames.push({ transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${r.toFixed(1)}deg)` });
-    }
-    frames.push(frames[0]); // ease back near the start so it loops smoothly
-    return frames;
-  }
-
-  function startIdleFloat(el){
-    return el.animate(driftKeyframes(4), {
-      duration: 2200 + Math.random() * 1800,
-      iterations: Infinity,
-      easing: 'ease-in-out'
-    });
-  }
-
-  let idleAnims = capsules.map(c => startIdleFloat(c));
-
-  // vigorous shaking used while the machine is "rolling"
-  function shakeCapsule(el){
-    return el.animate(driftKeyframes(14), {
-      duration: 650,
-      iterations: 1,
-      easing: 'ease-in-out'
-    });
-  }
-
-  function launchConfetti(){
-    const colors = ['#FF8C7A','#FFE49A','#B8E8D4','#D9CBFF','#FFB6C1'];
-    for(let i=0;i<26;i++){
-      const el = document.createElement('div');
-      el.className = 'confetti';
-      el.style.left = Math.random()*100 + 'vw';
-      el.style.background = colors[Math.floor(Math.random()*colors.length)];
-      el.style.animationDuration = (1.6 + Math.random()*1.2) + 's';
-      el.style.animationDelay = (Math.random()*0.3) + 's';
-      document.body.appendChild(el);
-      setTimeout(()=> el.remove(), 3200);
-    }
-  }
-
-  btn.addEventListener('click', () => {
-    btn.disabled = true;
-    resultCard.classList.remove('show');
-    machine.classList.remove('spin');
-    void machine.offsetWidth; // reflow to restart animation
-    machine.classList.add('spin');
-
-    // pause the gentle idle drift and make every capsule jostle around hard,
-    // like the real machine is being shaken before it drops one
-    idleAnims.forEach(a => a.pause());
-    capsules.forEach(c => {
-      const shake = shakeCapsule(c);
-      shake.onfinish = () => {
-        c.style.transform = ''; // clear the shake's final pose
-      };
-    });
-
-    setTimeout(() => {
-      const pick = menus[Math.floor(Math.random() * menus.length)];
-      resultEmoji.textContent = pick.emoji;
-      resultName.textContent = pick.name;
-      resultSub.textContent = pick.sub;
-      resultCard.classList.add('show');
-      launchConfetti();
-      btn.disabled = false;
-
-      // settle back into the calm floating motion
-      idleAnims = capsules.map(c => startIdleFloat(c));
-    }, 700);
-  });
-</script>
-
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="ko"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1">&lt;meta charset="UTF-8"&gt;</p>
+<p class="p1">&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
+<p class="p1">&lt;title&gt;오늘 뭐 먹지? 🍙&lt;/title&gt;</p>
+<p class="p1">&lt;link rel="preconnect" href="https://fonts.googleapis.com"&gt;</p>
+<p class="p1">&lt;link href="https://fonts.googleapis.com/css2?family=Jua&amp;family=Gaegu:wght@400;700&amp;display=swap" rel="stylesheet"&gt;</p>
+<p class="p1">&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>:root{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--cream:#FFF6EC;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--peach:#FFD9C7;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--coral:#FF8C7A;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--mint:#B8E8D4;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--butter:#FFE49A;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--choco:#6B4A3D;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--lavender:#D9CBFF;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>*{box-sizing:border-box;}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>body{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>margin:0;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>min-height:100vh;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>display:flex;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>align-items:center;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>justify-content:center;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background:</p>
+<p class="p1"><span class="Apple-converted-space">      </span>radial-gradient(circle at 15% 20%, var(--peach) 0%, transparent 40%),</p>
+<p class="p1"><span class="Apple-converted-space">      </span>radial-gradient(circle at 85% 15%, var(--mint) 0%, transparent 35%),</p>
+<p class="p1"><span class="Apple-converted-space">      </span>radial-gradient(circle at 80% 85%, var(--lavender) 0%, transparent 40%),</p>
+<p class="p1"><span class="Apple-converted-space">      </span>var(--cream);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-family:'Gaegu', sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color:var(--choco);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>overflow:hidden;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>position:relative;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>/* floating decorative emoji */</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.floaty{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size:2rem;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>opacity:0.55;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>animation:drift 6s ease-in-out infinite;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>pointer-events:none;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>user-select:none;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>@keyframes drift{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>0%,100%{ transform:translateY(0) rotate(-6deg); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>50%{ transform:translateY(-18px) rotate(6deg); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>.stage{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>position:relative;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>z-index:2;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>display:flex;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>flex-direction:column;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>align-items:center;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>gap:28px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>padding:32px;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>h1{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-family:'Jua', sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size:clamp(1.8rem, 5vw, 2.6rem);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>margin:0;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color:var(--choco);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>text-shadow:2px 2px 0 #fff;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>h1 span{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color:var(--coral);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>/* gacha machine */</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.machine{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>width:220px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>height:230px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>position:relative;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>.globe{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>width:200px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>height:170px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-radius:50% 50% 46% 46% / 55% 55% 45% 45%;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background:</p>
+<p class="p1"><span class="Apple-converted-space">      </span>radial-gradient(circle at 35% 30%, #ffffff 0%, #ffffff 8%, transparent 9%),</p>
+<p class="p1"><span class="Apple-converted-space">      </span>linear-gradient(180deg, #ffffff 0%, #eaf7ff 60%, #dff1ff 100%);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border:5px solid #ffffff;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>box-shadow:</p>
+<p class="p1"><span class="Apple-converted-space">      </span>inset -8px -10px 20px rgba(150,190,220,0.35),</p>
+<p class="p1"><span class="Apple-converted-space">      </span>0 10px 18px rgba(200,160,140,0.25);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>position:relative;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>margin:0 auto;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>overflow:hidden;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>.capsule{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>width:34px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>height:34px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-radius:50%;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>top:var(--t);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>left:var(--l);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.capsule::before, .capsule::after{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>content:"";</p>
+<p class="p1"><span class="Apple-converted-space">    </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>width:34px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>height:17px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>left:0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.capsule::before{ top:0; border-radius:34px 34px 0 0; background:var(--top-c); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.capsule::after{ bottom:0; border-radius:0 0 34px 34px; background:var(--bot-c); }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>.base{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>width:170px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>height:70px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>margin:0 auto;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background:linear-gradient(180deg, var(--coral) 0%, #E9694F 100%);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-radius:16px 16px 26px 26px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>position:relative;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>box-shadow:0 8px 14px rgba(150,90,70,0.25);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>.base::before{ /* coin slot */</p>
+<p class="p1"><span class="Apple-converted-space">    </span>content:"";</p>
+<p class="p1"><span class="Apple-converted-space">    </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>width:26px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>height:8px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background:#B94B34;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-radius:4px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>top:14px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>left:18px;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>.knob{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>width:36px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>height:36px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background:radial-gradient(circle at 35% 30%, #FFE9DE, var(--butter));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-radius:50%;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>right:18px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>top:16px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>box-shadow:0 3px 6px rgba(0,0,0,0.15);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>transition:transform .5s ease;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.machine.spin .knob{ transform:rotate(360deg); }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>.flap{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>width:40px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>height:22px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background:#E9694F;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-radius:0 0 8px 8px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>left:50%;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>bottom:-4px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>transform:translateX(-50%);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>/* dropped capsule animation */</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.drop-capsule{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>left:50%;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>bottom:-2px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>width:26px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>height:26px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-radius:50%;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background:linear-gradient(180deg, var(--butter), var(--coral));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>transform:translate(-50%, 0) scale(0);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>opacity:0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.machine.spin .drop-capsule{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>animation:popOut 0.9s ease forwards;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>@keyframes popOut{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>0%{ transform:translate(-50%, -10px) scale(0); opacity:0; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>40%{ transform:translate(-50%, 30px) scale(1); opacity:1; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>70%{ transform:translate(-50%, 20px) scale(1); opacity:1; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>100%{ transform:translate(-50%, 46px) scale(1); opacity:1; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>button.roll{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-family:'Jua', sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size:1.25rem;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>padding:16px 40px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border:none;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-radius:999px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background:linear-gradient(180deg, #FFA48E 0%, var(--coral) 100%);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color:#fff;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>cursor:pointer;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>box-shadow:0 6px 0 #D45B45, 0 10px 16px rgba(212,91,69,0.3);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>transition:transform .12s ease, box-shadow .12s ease;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>letter-spacing:1px;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>button.roll:hover{ transform:translateY(-2px); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>button.roll:active{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>transform:translateY(4px);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>box-shadow:0 2px 0 #D45B45, 0 4px 8px rgba(212,91,69,0.3);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>button.roll:disabled{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>opacity:0.7;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>cursor:default;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>/* result card */</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.result-wrap{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>min-height:150px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>display:flex;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>align-items:center;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>justify-content:center;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>.result-card{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background:#fff;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-radius:24px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>padding:22px 34px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>display:flex;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>flex-direction:column;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>align-items:center;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>gap:6px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>box-shadow:0 10px 0 var(--peach), 0 16px 24px rgba(150,90,70,0.15);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>opacity:0;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>transform:scale(0.6) rotate(-4deg);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border:3px dashed var(--coral);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.result-card.show{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>animation:cardPop 0.55s cubic-bezier(.34,1.56,.64,1) forwards;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>@keyframes cardPop{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>0%{ opacity:0; transform:scale(0.4) rotate(-10deg); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>60%{ opacity:1; transform:scale(1.08) rotate(3deg); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>100%{ opacity:1; transform:scale(1) rotate(0deg); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>.result-emoji{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size:3.2rem;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>animation:wiggle 1.4s ease-in-out infinite;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>@keyframes wiggle{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>0%,100%{ transform:rotate(-4deg); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>50%{ transform:rotate(4deg); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>.result-name{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-family:'Jua', sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size:1.6rem;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color:var(--choco);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>.result-sub{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size:0.95rem;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color:#B08571;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>.placeholder{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size:1rem;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color:#C7A891;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>/* confetti */</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.confetti{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>position:fixed;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>top:-10px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>width:8px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>height:14px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-radius:2px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>opacity:0.9;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>pointer-events:none;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>animation:fall linear forwards;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>@keyframes fall{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>to{ transform:translateY(110vh) rotate(540deg); opacity:0; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>footer{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-family:'Jua', sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size:0.8rem;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color:#C7A891;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>margin-top:4px;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="floaty" style="top:8%; left:8%;"&gt;🍜&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="floaty" style="top:15%; right:10%; animation-delay:1s;"&gt;🍱&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="floaty" style="bottom:12%; left:12%; animation-delay:2s;"&gt;🍙&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="floaty" style="bottom:18%; right:8%; animation-delay:1.5s;"&gt;🍕&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="floaty" style="top:45%; left:4%; animation-delay:2.5s;"&gt;🥟&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="floaty" style="top:40%; right:4%; animation-delay:0.5s;"&gt;🍔&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;main class="stage"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;h1&gt;오늘 점심, &lt;span&gt;뭐 먹지?&lt;/span&gt; 🤔&lt;/h1&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="machine" id="machine"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="globe" id="globe"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="base"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="knob"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="flap"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="drop-capsule"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;button class="roll" id="rollBtn"&gt;🎰 메뉴 뽑기&lt;/button&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="result-wrap"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="result-card" id="resultCard"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="result-emoji" id="resultEmoji"&gt;🍽️&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="result-name" id="resultName"&gt;버튼을 눌러줘!&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="result-sub" id="resultSub"&gt;오늘의 점심 메뉴가 여기 나타나요&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;footer&gt;버튼 하나로 고민 끝 ✨&lt;/footer&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/main&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const menus = [</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 한식</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"김치찌개", emoji:"🍲", sub:"얼큰하게 한 그릇 어때요?" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"된장찌개", emoji:"🍚", sub:"구수한 국물이 생각나는 날" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"순두부찌개", emoji:"🌶️", sub:"보들보들 얼큰하게" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"부대찌개", emoji:"🥘", sub:"얼큰하고 푸짐하게" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"갈비탕", emoji:"🍖", sub:"뜨끈한 보양식 한 그릇" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"삼계탕", emoji:"🍗", sub:"든든하게 몸보신하는 날" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"설렁탕", emoji:"🥣", sub:"뽀얀 국물이 생각날 때" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"육개장", emoji:"🌶️", sub:"칼칼하게 속을 풀어봐요" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"비빔밥", emoji:"🥗", sub:"골고루 비벼 먹는 즐거움" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"물냉면", emoji:"🍥", sub:"시원하게 즐기는 한 끼" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"비빔냉면", emoji:"🌶️", sub:"새콤매콤 입맛 살리기" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"삼겹살", emoji:"🥓", sub:"오늘은 좀 든든하게!" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"제육볶음", emoji:"🍖", sub:"매콤한 밥도둑" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"불고기", emoji:"🥩", sub:"달콤짭짤 남녀노소 인기" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"떡볶이", emoji:"🌶️", sub:"매콤달콤 국민 간식" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"라면", emoji:"🍜", sub:"간단하고 든든하게" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"김밥", emoji:"🍙", sub:"간단하지만 든든하게" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"순대국", emoji:"🍥", sub:"진한 국물이 생각날 때" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"칼국수", emoji:"🍜", sub:"따뜻한 면 요리가 필요한 날" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"잔치국수", emoji:"🍜", sub:"멸치육수 한 그릇 어때요" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"콩국수", emoji:"🥛", sub:"고소하고 시원한 한 끼" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"잡채", emoji:"🥢", sub:"쫄깃한 당면 요리" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"낙지볶음", emoji:"🐙", sub:"오늘은 매콤하게 화끈하게" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"감자탕", emoji:"🍲", sub:"얼큰하고 든든한 뼈해장국" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"닭갈비", emoji:"🍗", sub:"철판 위 매콤한 즐거움" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"보쌈", emoji:"🥩", sub:"부드러운 수육에 쌈 한입" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"매운탕", emoji:"🐟", sub:"얼큰한 생선 국물" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"조개찜", emoji:"🦪", sub:"바다향 가득한 한 끼" },</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 중식</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"짜장면", emoji:"🍜", sub:"오늘은 검은 유혹" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"짬뽕", emoji:"🌶️", sub:"칼칼한 국물 한 그릇" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"탕수육", emoji:"🍖", sub:"바삭한 탕수육 어때요" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"마파두부", emoji:"🌶️", sub:"부드러운 두부에 매콤함" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"마라탕", emoji:"🌶️", sub:"오늘은 화끈하게" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"마라샹궈", emoji:"🔥", sub:"얼얼하고 화끈한 한 끼" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"양꼬치", emoji:"🍢", sub:"불향 가득 꼬치 요리" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"훠궈", emoji:"🍲", sub:"동료들과 나눠 먹는 뜨끈함" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"깐풍기", emoji:"🍗", sub:"바삭달콤 매콤한 닭요리" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"유린기", emoji:"🍗", sub:"새콤달콤 소스가 일품" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"중식볶음밥", emoji:"🍚", sub:"불맛 가득한 볶음밥" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"딤섬", emoji:"🥟", sub:"작고 예쁜 한입 요리" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"고추잡채", emoji:"🌶️", sub:"매콤한 채소 볶음" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"팔보채", emoji:"🦐", sub:"해산물 듬뿍 볶음요리" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"베이징덕", emoji:"🦆", sub:"특별한 날엔 오리구이" },</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 일식</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"초밥", emoji:"🍣", sub:"오늘은 조금 특별하게" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"우동", emoji:"🍥", sub:"쫄깃한 면발이 당기는 날" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"라멘", emoji:"🍜", sub:"진한 육수 한 그릇" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"돈까스", emoji:"🍱", sub:"바삭바삭 튀김의 정석" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"규동", emoji:"🍚", sub:"달콤짭짤 소고기덮밥" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"카레라이스", emoji:"🍛", sub:"부드럽고 든든한 한 그릇" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"오코노미야키", emoji:"🥞", sub:"일본식 부침개 어때요" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"타코야키", emoji:"🐙", sub:"쫄깃한 문어빵 한입" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"텐동", emoji:"🍤", sub:"바삭한 튀김 덮밥" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"소바", emoji:"🍜", sub:"시원하고 깔끔한 메밀면" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"나베", emoji:"🍲", sub:"뜨끈하게 즐기는 전골" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"회덮밥", emoji:"🍣", sub:"신선하게 즐기는 한 끼" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"가츠동", emoji:"🍚", sub:"바삭한 돈까스 덮밥" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"야키토리", emoji:"🍢", sub:"숯불향 가득한 닭꼬치" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"오니기리", emoji:"🍙", sub:"간단하게 즐기는 주먹밥" },</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 양식</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"파스타", emoji:"🍝", sub:"기분 내는 날엔 파스타" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"피자", emoji:"🍕", sub:"동료들과 나눠 먹기 좋아요" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"스테이크", emoji:"🥩", sub:"오늘은 나에게 주는 선물" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"햄버거", emoji:"🍔", sub:"빠르고 든든한 선택" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"샌드위치", emoji:"🥪", sub:"가볍게 즐기는 한 끼" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"리조또", emoji:"🍚", sub:"크리미하고 고소한 한 그릇" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"오믈렛", emoji:"🍳", sub:"폭신폭신 계란 요리" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"그라탕", emoji:"🧀", sub:"치즈 듬뿍 든든하게" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"감바스", emoji:"🦐", sub:"올리브오일에 퐁당 새우" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"브런치플레이트", emoji:"🥐", sub:"여유롭게 즐기는 한 끼" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"핫도그", emoji:"🌭", sub:"간단하게 한입에 쏙" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"부리또", emoji:"🌯", sub:"든든하게 돌돌 말아서" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"나초", emoji:"🧀", sub:"치즈와 함께 즐기는 간식" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"타코", emoji:"🌮", sub:"이국적인 한 끼 어때요?" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"샐러드", emoji:"🥗", sub:"가볍고 건강하게" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"크림수프", emoji:"🥣", sub:"부드럽고 따뜻한 한 그릇" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"라자냐", emoji:"🍝", sub:"겹겹이 쌓인 든든함" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"까르보나라", emoji:"🍝", sub:"고소하고 진한 크림파스타" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"치즈버거", emoji:"🍔", sub:"치즈가 듬뿍 든 든든함" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"프렌치토스트", emoji:"🍞", sub:"달콤한 브런치 메뉴" },</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 아시아</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"베트남쌀국수", emoji:"🍜", sub:"깔끔한 국물이 땡길 때" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"반미", emoji:"🥖", sub:"바게트 속 든든한 재료들" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"팟타이", emoji:"🍜", sub:"새콤달콤 태국식 볶음면" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"똠양꿍", emoji:"🍲", sub:"새콤매콤 향긋한 국물" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"그린커리", emoji:"🍛", sub:"향긋하고 매콤한 태국커리" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"나시고랭", emoji:"🍚", sub:"인도네시아식 볶음밥" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"카오팟", emoji:"🍚", sub:"태국식 볶음밥 어때요" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"사테", emoji:"🍢", sub:"땅콩소스 꼬치 요리" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"인도커리", emoji:"🍛", sub:"향신료 가득한 한 그릇" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"난", emoji:"🫓", sub:"커리와 찰떡궁합" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"탄두리치킨", emoji:"🍗", sub:"화덕에 구운 향긋한 치킨" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"케밥", emoji:"🌯", sub:"고기 듬뿍 든든하게" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"분짜", emoji:"🍜", sub:"베트남식 숯불고기 국수" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"딴딴면", emoji:"🌶️", sub:"고소하고 매콤한 중국면" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"팟씨유", emoji:"🍜", sub:"불맛 나는 태국식 볶음면" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"초계국수", emoji:"🍜", sub:"새콤하고 시원한 닭고기국수" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"락사", emoji:"🍜", sub:"코코넛 향 가득한 국수" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"싱가포르치킨라이스", emoji:"🍗", sub:"부드러운 닭고기와 향긋한 밥" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"만두", emoji:"🥟", sub:"찐만두 어때요?" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"훈툰면", emoji:"🍜", sub:"쫄깃한 만두가 들어간 국수" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"알탕", emoji:"🐟", sub:"얼큰한 알탕 한 그릇" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"회", emoji:"🐟", sub:"신선하게 즐기는 오늘의 별미" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"치킨", emoji:"🍗", sub:"점심에도 치킨은 옳다" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ name:"볶음밥", emoji:"🍚", sub:"냉장고 파먹기 좋은 날" }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>];</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>const btn = document.getElementById('rollBtn');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const machine = document.getElementById('machine');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const resultCard = document.getElementById('resultCard');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const resultEmoji = document.getElementById('resultEmoji');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const resultName = document.getElementById('resultName');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const resultSub = document.getElementById('resultSub');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const globe = document.getElementById('globe');</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// fill globe with little colorful capsules for decoration</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const capsuleColors = ['#FF8C7A','#FFE49A','#B8E8D4','#D9CBFF','#FFB6C1','#A0D8FF'];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const positions = [</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{t:'10%', l:'16%'}, {t:'6%', l:'50%'}, {t:'14%', l:'72%'},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{t:'28%', l:'6%'},<span class="Apple-converted-space">  </span>{t:'26%', l:'34%'}, {t:'30%', l:'58%'}, {t:'22%', l:'80%'},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{t:'44%', l:'18%'}, {t:'42%', l:'42%'}, {t:'46%', l:'64%'}, {t:'40%', l:'84%'},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{t:'58%', l:'30%'}, {t:'56%', l:'52%'}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>];</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>const capsules = positions.map((p, i) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const c = document.createElement('div');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>c.className = 'capsule';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>c.style.setProperty('--t', p.t);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>c.style.setProperty('--l', p.l);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>c.style.setProperty('--top-c', capsuleColors[i % capsuleColors.length]);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>c.style.setProperty('--bot-c', '#ffffff');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>globe.appendChild(c);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return c;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// generate a smooth, meandering set of keyframes so each capsule</p>
+<p class="p1"><span class="Apple-converted-space">  </span>// drifts and bumps around on its own path, like it's floating in water</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function driftKeyframes(amplitude){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const steps = 5 + Math.floor(Math.random() * 3);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const frames = [];</p>
+<p class="p1"><span class="Apple-converted-space">    </span>for (let i = 0; i &lt;= steps; i++){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const x = (Math.random() - 0.5) * amplitude * 2;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const y = (Math.random() - 0.5) * amplitude * 2;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const r = (Math.random() - 0.5) * (amplitude * 3);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>frames.push({ transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${r.toFixed(1)}deg)` });</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>frames.push(frames[0]); // ease back near the start so it loops smoothly</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return frames;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>function startIdleFloat(el){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return el.animate(driftKeyframes(4), {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>duration: 2200 + Math.random() * 1800,</p>
+<p class="p1"><span class="Apple-converted-space">      </span>iterations: Infinity,</p>
+<p class="p1"><span class="Apple-converted-space">      </span>easing: 'ease-in-out'</p>
+<p class="p1"><span class="Apple-converted-space">    </span>});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>let idleAnims = capsules.map(c =&gt; startIdleFloat(c));</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// vigorous shaking used while the machine is "rolling"</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function shakeCapsule(el){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return el.animate(driftKeyframes(14), {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>duration: 650,</p>
+<p class="p1"><span class="Apple-converted-space">      </span>iterations: 1,</p>
+<p class="p1"><span class="Apple-converted-space">      </span>easing: 'ease-in-out'</p>
+<p class="p1"><span class="Apple-converted-space">    </span>});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>function launchConfetti(){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const colors = ['#FF8C7A','#FFE49A','#B8E8D4','#D9CBFF','#FFB6C1'];</p>
+<p class="p1"><span class="Apple-converted-space">    </span>for(let i=0;i&lt;26;i++){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const el = document.createElement('div');</p>
+<p class="p1"><span class="Apple-converted-space">      </span>el.className = 'confetti';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>el.style.left = Math.random()*100 + 'vw';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>el.style.background = colors[Math.floor(Math.random()*colors.length)];</p>
+<p class="p1"><span class="Apple-converted-space">      </span>el.style.animationDuration = (1.6 + Math.random()*1.2) + 's';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>el.style.animationDelay = (Math.random()*0.3) + 's';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>document.body.appendChild(el);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>setTimeout(()=&gt; el.remove(), 3200);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>btn.addEventListener('click', () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>btn.disabled = true;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>resultCard.classList.remove('show');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>machine.classList.remove('spin');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>void machine.offsetWidth; // reflow to restart animation</p>
+<p class="p1"><span class="Apple-converted-space">    </span>machine.classList.add('spin');</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// pause the gentle idle drift and make every capsule jostle around hard,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// like the real machine is being shaken before it drops one</p>
+<p class="p1"><span class="Apple-converted-space">    </span>idleAnims.forEach(a =&gt; a.pause());</p>
+<p class="p1"><span class="Apple-converted-space">    </span>capsules.forEach(c =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const shake = shakeCapsule(c);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>shake.onfinish = () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>c.style.transform = ''; // clear the shake's final pose</p>
+<p class="p1"><span class="Apple-converted-space">      </span>};</p>
+<p class="p1"><span class="Apple-converted-space">    </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>setTimeout(() =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const pick = menus[Math.floor(Math.random() * menus.length)];</p>
+<p class="p1"><span class="Apple-converted-space">      </span>resultEmoji.textContent = pick.emoji;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>resultName.textContent = pick.name;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>resultSub.textContent = pick.sub;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>resultCard.classList.add('show');</p>
+<p class="p1"><span class="Apple-converted-space">      </span>launchConfetti();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>btn.disabled = false;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// settle back into the calm floating motion</p>
+<p class="p1"><span class="Apple-converted-space">      </span>idleAnims = capsules.map(c =&gt; startIdleFloat(c));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}, 700);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p1">&lt;/script&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
 </body>
 </html>
